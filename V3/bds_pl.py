@@ -105,21 +105,21 @@ def execute_command():
         gamemode_window.title("Select Gamemode")
 
         def select_gamemode(mode):
-            if mode == "Adventure":
+            if mode == "Survival":
                 gamemode_code = 0
             elif mode == "Creative":
                 gamemode_code = 1
-            elif mode == "Survival":
+            elif mode == "Adventure":
                 gamemode_code = 2
             else:
-                gamemode_code = 0  # Default to Adventure mode if unknown mode
+                gamemode_code = 0  # Default to Survival mode if unknown mode
 
             for player_name in selected_players:
                 send_command(f"gamemode {gamemode_code} {player_name}")
             messagebox.showinfo("Command Sent", f"Set {', '.join(selected_players)} to {mode} mode (gamemode {gamemode_code}).")
             gamemode_window.destroy()
 
-        # Create buttons for each gamemode
+        # Create buttons for each gamemode (Survival is now Gamemode 0)
         gamemodes = ["Survival", "Creative", "Adventure"]
         for mode in gamemodes:
             btn = tk.Button(gamemode_window, text=mode, command=lambda m=mode: select_gamemode(m))
@@ -128,7 +128,20 @@ def execute_command():
     elif command == "effect":
         effect_window = tk.Toplevel(root)
         effect_window.title("Select Effect")
-        
+        effect_window.geometry("500x400")  # Adjust window size for multiple columns
+
+        # Add a canvas and scrollbar
+        canvas = tk.Canvas(effect_window)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        scrollbar = ttk.Scrollbar(effect_window, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side=tk.RIGHT, fill="y")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Add a frame inside the canvas
+        effect_frame = tk.Frame(canvas)
+        canvas.create_window((0, 0), window=effect_frame, anchor="nw")
+
         def select_effect(effect):
             if effect == "clear":
                 for player_name in selected_players:
@@ -144,10 +157,16 @@ def execute_command():
                     send_command(f"effect {player_name} {effect} {duration} {amplifier}")
                 messagebox.showinfo("Command Sent", f"Executed effect {effect} {duration} {amplifier} on {', '.join(selected_players)}")
             effect_window.destroy()
-        
-        for effect in EFFECTS + ["clear"]:
-            btn = tk.Button(effect_window, text=effect, command=lambda e=effect: select_effect(e))
-            btn.pack()
+
+        # Layout effects in 3 columns
+        columns = 3
+        for i, effect in enumerate(EFFECTS + ["clear"]):
+            btn = tk.Button(effect_frame, text=effect, width=20, command=lambda e=effect: select_effect(e))
+            btn.grid(row=i // columns, column=i % columns, padx=10, pady=5)
+
+        # Update the scroll region
+        effect_frame.update_idletasks()
+        canvas.configure(scrollregion=canvas.bbox("all"))
 
     elif command == "enchant":
         enchant_item(selected_players)
